@@ -54,6 +54,23 @@ def get_tile_symbol(title):
     return symbols.get(title, ' ')
 
 
+#Playfield hehe
+class Playfield:
+    def __init__(self, rows, cols):
+        self.playfield = [[(2, 0, 0, 1, 0), (0, 0, 1, 1, 0), (0, 0, 1, 1, 0)],
+                     [(1, 0, 0, 1, 0), (0, 1, 1, 0, 1), (0, 1, 0, 0, 1)],
+                     [(0, 1, 0, 1, 0), (0, 1, 1, 0, 0), (2, 1, 0, 0, 0)]]
+
+        self.rows = rows
+        self.cols = cols
+
+        def getplayfield(self):
+            return self.playfield
+
+        def __str__(self):
+            return str(self.playfield) + "\nrows: " + str(self.rows) + "\ncols: " + str(self.cols)
+
+
 def create_playfield(rows, cols):
     # static version
     playfield = [[(2, 0, 0, 1, 0), (0, 0, 1, 1, 0), (0, 0, 1, 1, 0)],
@@ -104,6 +121,7 @@ def check_if_connected(playfield, row, col):
         if tuple1[1] & (playfield[row - 1][col])[3]:
             print("Connection to North:")
             print(playfield[row - 1][col])
+            return(row - 1, col)
     except IndexError:
         pass
 
@@ -113,6 +131,8 @@ def check_if_connected(playfield, row, col):
         if tuple1[2] & (playfield[row][col + 1])[4]:
             print("Connection to East:")
             print(playfield[row][col + 1])
+            return(row, col + 1)
+
     except IndexError:
         pass
 
@@ -121,6 +141,8 @@ def check_if_connected(playfield, row, col):
         if tuple1[3] & (playfield[row + 1][col])[1]:
             print("Connection to South")
             print(playfield[row + 1][col])
+            return(row + 1, col)
+
     except IndexError:
         pass
 
@@ -129,6 +151,8 @@ def check_if_connected(playfield, row, col):
         if tuple1[4] & (playfield[row][col - 1])[2]:
             print("Connection to West:")
             print(playfield[row][col - 1])
+            return(row, col - 1)
+
     except IndexError:
         pass
 
