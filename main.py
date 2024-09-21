@@ -78,7 +78,7 @@ class Playfield:
         new_west = south
         self.playfield[row][col] = types, new_north, new_east, new_south, new_west
         # Calling checkIfConnected to look for adjacent tiles
-        self.tree.update()
+        self.tree.update(self)
 
     # tile must be in format (x,y,y,y,y)
     def modifyPlayfield(self, row, col, tile):
@@ -100,7 +100,7 @@ class Playfield:
                 pass
 
         # try checking for east tile
-        if direction == 1:
+        elif direction == 1:
             try:
                 if tuple1[2] & (self.playfield[row][col + 1])[4]:
                     print("Connection to East:")
@@ -110,7 +110,7 @@ class Playfield:
                 pass
 
         # try checking for south tile
-        if direction == 2:
+        elif direction == 2:
             try:
                 if tuple1[3] & (self.playfield[row + 1][col])[1]:
                     print("Connection to South")
@@ -120,7 +120,7 @@ class Playfield:
                 pass
 
         # try checking for west tile
-        if direction == 3:
+        elif direction == 3:
             try:
                 if tuple1[4] & (self.playfield[row][col - 1])[2]:
                     print("Connection to West:")
@@ -128,9 +128,9 @@ class Playfield:
                     return True
             except IndexError:
                 pass
-
+        else:
         # if no adjacent pipe connection:
-        return False
+            return False
 
     # Displaying playfield on screen
     def display_playfield(self, images, canvas, image_refs):
@@ -146,8 +146,8 @@ class Playfield:
                     image_refs.append(img)  # Keep a reference to avoid garbage collection
 
 class Tree:
-    def __init__(self, playfield, postition):
-        self.position =postition
+    def __init__(self, playfield, position):
+        self.position = position
 
         self.north = None
         self.east = None
@@ -157,8 +157,8 @@ class Tree:
         self.playfield = playfield
 
     #update the tree starting from well
-    def update(self):
-
+    def update(self, playfield):
+        self.playfield = playfield
         # make children tree elem, adding to direction of tree
 
         # checking north
@@ -177,7 +177,7 @@ class Tree:
             self.south = n
 
         # checking west
-        if self.playfield.checkIfConnected(self.position[0], self.position[1], 4):
+        if self.playfield.checkIfConnected(self.position[0], self.position[1], 3):
             n = Tree(self.playfield, (self.position[0], self.position[1]-1))
             self.west = n
 
