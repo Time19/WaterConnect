@@ -73,18 +73,17 @@ class Playfield:
         new_west = south
         self.playfield[row][col] = types, new_north, new_east, new_south, new_west
         # Calling checkIfConnected to look for adjacent tiles
-        self.checkIfConnected(row,col)
-
+        self.checkIfConnected(row, col)
 
     # tile must be in format (x,y,y,y,y)
-    def modifyPlayfield(self,row, col, tile):
+    def modifyPlayfield(self, row, col, tile):
         self.playfield[row][col] = tile
 
-
     # checking each side of tile if connected.
-    def checkIfConnected(self,row, col):
+    def checkIfConnected(self, row, col):
         tuple1 = self.playfield[row][col]
         print("-------")
+
         # try checking for north tile
         try:
             if tuple1[1] & (self.playfield[row - 1][col])[3]:
@@ -121,6 +120,9 @@ class Playfield:
         except IndexError:
             pass
 
+        # if no adjacent pipe connection:
+        return False
+
     # Displaying playfield on screen
     def display_playfield(self, images, canvas, image_refs):
         canvas.delete("all")  # Clear existing images
@@ -133,6 +135,15 @@ class Playfield:
                     img = ImageTk.PhotoImage(images[symbol])
                     canvas.create_image(col_idx * tile_size, row_idx * tile_size, anchor=tk.NW, image=img)
                     image_refs.append(img)  # Keep a reference to avoid garbage collection
+
+class Tree:
+    def __init__(self, north = None, south = None, west = None, east = None):
+        self.north = north
+        self.east = east
+        self.south = south
+        self.west = west
+
+
 
 def main():
     root = tk.Tk()
@@ -158,7 +169,7 @@ def main():
         pf.display_playfield(images, canvas, image_refs)
 
     canvas.bind("<Button-1>", on_click)
-    pf.display_playfield(images,canvas, image_refs)
+    pf.display_playfield(images, canvas, image_refs)
 
     root.mainloop()
 
