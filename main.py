@@ -1,4 +1,5 @@
 import os
+
 from PIL import Image, ImageTk
 import tkinter as tk
 
@@ -64,6 +65,10 @@ class Playfield:
         self.rows = rows
         self.cols = cols
 
+        self.well = (0,1)
+
+        self.tree = Tree(self, self.well)
+
     # rotating one tile
     def rotateTile(self, row, col):
         types, north, east, south, west = self.playfield[row][col]
@@ -73,52 +78,56 @@ class Playfield:
         new_west = south
         self.playfield[row][col] = types, new_north, new_east, new_south, new_west
         # Calling checkIfConnected to look for adjacent tiles
-        self.checkIfConnected(row, col)
+        self.tree.update()
 
     # tile must be in format (x,y,y,y,y)
     def modifyPlayfield(self, row, col, tile):
         self.playfield[row][col] = tile
 
     # checking each side of tile if connected.
-    def checkIfConnected(self, row, col):
+    def checkIfConnected(self, row, col, direction):
         tuple1 = self.playfield[row][col]
         print("-------")
 
         # try checking for north tile
-        try:
-            if tuple1[1] & (self.playfield[row - 1][col])[3]:
-                print("Connection to North:")
-                print(self.playfield[row - 1][col])
-                return row - 1, col
-        except IndexError:
-            pass
+        if direction == 0:
+            try:
+                if tuple1[1] & (self.playfield[row - 1][col])[3]:
+                    print("Connection to North:")
+                    print(self.playfield[row - 1][col])
+                    return True
+            except IndexError:
+                pass
 
         # try checking for east tile
-        try:
-            if tuple1[2] & (self.playfield[row][col + 1])[4]:
-                print("Connection to East:")
-                print(self.playfield[row][col + 1])
-                return row, col + 1
-        except IndexError:
-            pass
+        if direction == 1:
+            try:
+                if tuple1[2] & (self.playfield[row][col + 1])[4]:
+                    print("Connection to East:")
+                    print(self.playfield[row][col + 1])
+                    return True
+            except IndexError:
+                pass
 
         # try checking for south tile
-        try:
-            if tuple1[3] & (self.playfield[row + 1][col])[1]:
-                print("Connection to South")
-                print(self.playfield[row + 1][col])
-                return row + 1, col
-        except IndexError:
-            pass
+        if direction == 2:
+            try:
+                if tuple1[3] & (self.playfield[row + 1][col])[1]:
+                    print("Connection to South")
+                    print(self.playfield[row + 1][col])
+                    return True
+            except IndexError:
+                pass
 
         # try checking for west tile
-        try:
-            if tuple1[4] & (self.playfield[row][col - 1])[2]:
-                print("Connection to West:")
-                print(self.playfield[row][col - 1])
-                return row, col - 1
-        except IndexError:
-            pass
+        if direction == 3:
+            try:
+                if tuple1[4] & (self.playfield[row][col - 1])[2]:
+                    print("Connection to West:")
+                    print(self.playfield[row][col - 1])
+                    return True
+            except IndexError:
+                pass
 
         # if no adjacent pipe connection:
         return False
@@ -137,11 +146,40 @@ class Playfield:
                     image_refs.append(img)  # Keep a reference to avoid garbage collection
 
 class Tree:
-    def __init__(self, north = None, south = None, west = None, east = None):
-        self.north = north
-        self.east = east
-        self.south = south
-        self.west = west
+    def __init__(self, playfield, postition):
+        self.position =postition
+
+        self.north = None
+        self.east = None
+        self.south = None
+        self.west = None
+
+        self.playfield = playfield
+
+    #update the tree starting from well
+    def update(self):
+
+        # make children tree elem, adding to direction of tree
+
+        # checking north
+        if self.playfield.checkIfConnected(self.position[0], self.position[1], 0):
+            n = Tree(self.playfield, (self.position[0] - 1, self.position[1]))
+            self.north = n
+
+        # checking east
+        if self.playfield.checkIfConnected(self.position[0], self.position[1], 1):
+            n = Tree(self.playfield, (self.position[0], self.position[1]+1))
+            self.east = n
+
+        # checking south
+        if self.playfield.checkIfConnected(self.position[0], self.position[1], 2):
+            n = Tree(self.playfield, (self.position[0]+1, self.position[1]))
+            self.south = n
+
+        # checking west
+        if self.playfield.checkIfConnected(self.position[0], self.position[1], 4):
+            n = Tree(self.playfield, (self.position[0], self.position[1]-1))
+            self.west = n
 
 
 
