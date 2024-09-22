@@ -65,7 +65,7 @@ class Playfield:
         self.rows = rows
         self.cols = cols
 
-        self.well = (0,1)
+        self.well = (1, 0)
 
         self.tree = Tree(self, self.well)
 
@@ -128,12 +128,13 @@ class Playfield:
                     return True
             except IndexError:
                 pass
-        else:
+
         # if no adjacent pipe connection:
+        else:
             return False
 
     # Displaying playfield on screen
-    def display_playfield(self, images, canvas, image_refs):
+    def displayPlayfield(self, images, canvas, image_refs):
         canvas.delete("all")  # Clear existing images
         tile_size = 200
 
@@ -144,6 +145,7 @@ class Playfield:
                     img = ImageTk.PhotoImage(images[symbol])
                     canvas.create_image(col_idx * tile_size, row_idx * tile_size, anchor=tk.NW, image=img)
                     image_refs.append(img)  # Keep a reference to avoid garbage collection
+
 
 class Tree:
     def __init__(self, playfield, position):
@@ -156,31 +158,33 @@ class Tree:
 
         self.playfield = playfield
 
-    #update the tree starting from well
-    def update(self, playfield):
+    # used some help of chatGPT but now it works lol
+    def update(self, playfield, visited=None):
+        if visited is None:
+            visited = set()
+
+            # Add current position to visited
+        visited.add(self.position)
+        # Since playfield got changed, update old one
         self.playfield = playfield
-        # make children tree elem, adding to direction of tree
 
-        # checking north
-        if self.playfield.checkIfConnected(self.position[0], self.position[1], 0):
-            n = Tree(self.playfield, (self.position[0] - 1, self.position[1]))
-            self.north = n
+        for direction, (dr, dc), attr in zip(
+                range(4),
+                [(-1, 0), (0, 1), (1, 0), (0, -1)],
+                ['north', 'east', 'south', 'west']
+        ):
+            new_position = (self.position[0] + dr, self.position[1] + dc)
 
-        # checking east
-        if self.playfield.checkIfConnected(self.position[0], self.position[1], 1):
-            n = Tree(self.playfield, (self.position[0], self.position[1]+1))
-            self.east = n
+            if (0 <= new_position[0] < self.playfield.rows and
+                    0 <= new_position[1] < self.playfield.cols and
+                    new_position not in visited and
+                    self.playfield.checkIfConnected(self.position[0], self.position[1], direction)):
+                # Create a new Tree node for the connected position
+                subtree = Tree(self.playfield, new_position)
+                setattr(self, attr, subtree)
 
-        # checking south
-        if self.playfield.checkIfConnected(self.position[0], self.position[1], 2):
-            n = Tree(self.playfield, (self.position[0]+1, self.position[1]))
-            self.south = n
-
-        # checking west
-        if self.playfield.checkIfConnected(self.position[0], self.position[1], 3):
-            n = Tree(self.playfield, (self.position[0], self.position[1]-1))
-            self.west = n
-
+                # Recursively update the subtree
+                subtree.update(self.playfield, visited)
 
 
 def main():
@@ -200,14 +204,15 @@ def main():
     image_refs = []  # To store image references
 
     def on_click(event):
+        print("#####################")
         col = event.x // tile_size
         row = event.y // tile_size
 
         pf.rotateTile(row, col)
-        pf.display_playfield(images, canvas, image_refs)
+        pf.displayPlayfield(images, canvas, image_refs)
 
     canvas.bind("<Button-1>", on_click)
-    pf.display_playfield(images, canvas, image_refs)
+    pf.displayPlayfield(images, canvas, image_refs)
 
     root.mainloop()
 
