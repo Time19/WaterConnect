@@ -74,7 +74,7 @@ class Playfield:
         bush_positions = set()
         for r in range(self.rows):
             for c in range(self.cols):
-                if self.playfield[r][c][0] == 2:  # Assuming '2' indicates a bush
+                if self.playfield[r][c][0] == 2:  #'2' indicates a bush
                     bush_positions.add((r, c))
         return bush_positions
 
