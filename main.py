@@ -66,8 +66,17 @@ class Playfield:
         self.cols = cols
 
         self.well = (1, 0)
+        self.bush_positions = self._find_bush_positions()
 
         self.tree = Tree(self, self.well)
+
+    def _find_bush_positions(self):
+        bush_positions = set()
+        for r in range(self.rows):
+            for c in range(self.cols):
+                if self.playfield[r][c][0] == 2:  # Assuming '2' indicates a bush
+                    bush_positions.add((r, c))
+        return bush_positions
 
     # rotating one tile
     def rotateTile(self, row, col):
@@ -158,33 +167,39 @@ class Tree:
 
         self.playfield = playfield
 
-    # used some help of chatGPT but now it works lol
-    def update(self, playfield, visited=None):
+    def update(self, playfield, visited=None, connected_bushes=None):
         if visited is None:
             visited = set()
+        if connected_bushes is None:
+            connected_bushes = set()
 
-            # Add current position to visited
         visited.add(self.position)
-        # Since playfield got changed, update old one
+
+        # Check if the current position is a bush
+        if self.position in self.playfield.bush_positions:
+            connected_bushes.add(self.position)
+
+        # Win condition: all bush positions are connected
+        if connected_bushes == self.playfield.bush_positions:
+            print("All bushes are connected to the well! You win!")
+
         self.playfield = playfield
 
         for direction, (dr, dc), attr in zip(
-                range(4),
-                [(-1, 0), (0, 1), (1, 0), (0, -1)],
-                ['north', 'east', 'south', 'west']
+            range(4),
+            [(-1, 0), (0, 1), (1, 0), (0, -1)],
+            ['north', 'east', 'south', 'west']
         ):
             new_position = (self.position[0] + dr, self.position[1] + dc)
 
             if (0 <= new_position[0] < self.playfield.rows and
-                    0 <= new_position[1] < self.playfield.cols and
-                    new_position not in visited and
-                    self.playfield.checkIfConnected(self.position[0], self.position[1], direction)):
-                # Create a new Tree node for the connected position
+                0 <= new_position[1] < self.playfield.cols and
+                new_position not in visited and
+                self.playfield.checkIfConnected(self.position[0], self.position[1], direction)):
+
                 subtree = Tree(self.playfield, new_position)
                 setattr(self, attr, subtree)
-
-                # Recursively update the subtree
-                subtree.update(self.playfield, visited)
+                subtree.update(self.playfield, visited, connected_bushes)
 
 
 def main():
