@@ -33,24 +33,24 @@ def load_images():
 
 def get_tile_symbol(title):
     symbols = {
-        (0, 1, 0, 1, 0): 'pipe00',
-        (0, 0, 1, 0, 1): 'pipe10',
-        (0, 0, 1, 1, 1): 'pipe01',
-        (0, 1, 0, 1, 1): 'pipe11',
-        (0, 1, 1, 0, 1): 'pipe21',
-        (0, 1, 1, 1, 0): 'pipe31',
-        (0, 0, 0, 1, 1): 'pipe02',
-        (0, 1, 0, 0, 1): 'pipe12',
-        (0, 1, 1, 0, 0): 'pipe22',
-        (0, 0, 1, 1, 0): 'pipe32',
-        (1, 0, 0, 1, 0): 'pipe03',
-        (1, 0, 0, 0, 1): 'pipe13',
-        (1, 1, 0, 0, 0): 'pipe23',
-        (1, 0, 1, 0, 0): 'pipe33',
-        (2, 0, 0, 1, 0): 'pipe04',
-        (2, 0, 0, 0, 1): 'pipe14',
-        (2, 1, 0, 0, 0): 'pipe24',
-        (2, 0, 1, 0, 0): 'pipe34'
+        (1, 0, 1, 0, 0): 'pipe00',
+        (0, 1, 0, 1, 0): 'pipe10',
+        (0, 1, 1, 1, 0): 'pipe01',
+        (1, 0, 1, 1, 0): 'pipe11',
+        (1, 1, 0, 1, 0): 'pipe21',
+        (1, 1, 1, 0, 0): 'pipe31',
+        (0, 0, 1, 1, 0): 'pipe02',
+        (1, 0, 0, 1, 0): 'pipe12',
+        (1, 1, 0, 0, 0): 'pipe22',
+        (0, 1, 1, 0, 0): 'pipe32',
+        (0, 0, 1, 0, 1): 'pipe03',
+        (0, 0, 0, 1, 1): 'pipe13',
+        (1, 0, 0, 0, 1): 'pipe23',
+        (0, 1, 0, 0, 1): 'pipe33',
+        (0, 0, 1, 0, 2): 'pipe04',
+        (0, 0, 0, 1, 2): 'pipe14',
+        (1, 0, 0, 0, 2): 'pipe24',
+        (0, 1, 0, 0, 2): 'pipe34'
     }
     return symbols.get(title, ' ')
 
@@ -58,17 +58,20 @@ def get_tile_symbol(title):
 # Playfield hehe
 class Playfield:
     def __init__(self, rows, cols):
-        self.playfield = [[(2, 0, 0, 1, 0), (0, 0, 1, 1, 0), (0, 0, 1, 1, 0)],
-                          [(1, 0, 0, 1, 0), (0, 1, 1, 0, 1), (0, 1, 0, 0, 1)],
-                          [(0, 1, 0, 1, 0), (0, 1, 1, 0, 0), (2, 1, 0, 0, 0)]]
+        self.playfield = [[(0, 1, 0, 0, 2), (0, 0, 0, 1, 1), ( 0, 1, 1, 0, 0)],
+                          [(1, 0, 0, 0, 1), (0, 1, 1, 0, 1), ( 0, 0, 1, 1, 0)],
+                          [(1, 0, 1, 0, 0), (0, 1, 1, 0, 0), ( 1, 0, 0, 0, 2)]]
 
         self.rows = rows
         self.cols = cols
 
         self.well = (1, 0)
-        self.bush_positions = self._find_bush_positions()
-
+        self.bushes = {(0, 0), (2, 2)}
         self.tree = Tree(self, self.well)
+
+    def __getitem__(self, index):
+        r,c,e = index
+        return self.playfield[r][c][e]
 
     def _find_bush_positions(self):
         bush_positions = set()
@@ -87,7 +90,7 @@ class Playfield:
         new_west = south
         self.playfield[row][col] = types, new_north, new_east, new_south, new_west
         # Calling checkIfConnected to look for adjacent tiles
-        self.tree.update(self)
+        self.tree.update()
 
     # tile must be in format (x,y,y,y,y)
     def modifyPlayfield(self, row, col, tile):
@@ -167,40 +170,43 @@ class Tree:
 
         self.playfield = playfield
 
-    def update(self, playfield, visited=None, connected_bushes=None):
+
+    def update(self, visited=None, connected_bushes=None):
+
+        #if set's don't exist --> create them
         if visited is None:
             visited = set()
+
         if connected_bushes is None:
             connected_bushes = set()
 
+        #adding to set to maintain recursion end
         visited.add(self.position)
 
-        # Check if the current position is a bush
-        if self.position in self.playfield.bush_positions:
+        if self.playfield[self.position[0], self.position[1], 4] == 2:
             connected_bushes.add(self.position)
 
-        # Win condition: all bush positions are connected
-        if connected_bushes == self.playfield.bush_positions:
-            print("All bushes are connected to the well! You win!")
+        if connected_bushes == self.playfield.bushes:
+            print("Congrats, you have won the game :)")
 
-        self.playfield = playfield
+        for direction, (dr,dc), attr in zip(
+                range(4),
+                [(-1, 0), (0, 1), (1, 0), (0, -1)],
+                ["north", "east", "south", "west"]):
 
-        for direction, (dr, dc), attr in zip(
-            range(4),
-            [(-1, 0), (0, 1), (1, 0), (0, -1)],
-            ['north', 'east', 'south', 'west']
-        ):
-            new_position = (self.position[0] + dr, self.position[1] + dc)
+            #setting new position
+            newPosition = (self.position[0] + dr, self.position[1] + dc)
 
-            if (0 <= new_position[0] < self.playfield.rows and
-                0 <= new_position[1] < self.playfield.cols and
-                new_position not in visited and
+            #check for each direction
+            if (0 <= newPosition[0] < self.playfield.rows and
+                0 <= newPosition[1] < self.playfield.cols and
+                newPosition not in visited and
                 self.playfield.checkIfConnected(self.position[0], self.position[1], direction)):
 
-                subtree = Tree(self.playfield, new_position)
+                #create subtree
+                subtree = Tree(self.playfield, newPosition)
                 setattr(self, attr, subtree)
-                subtree.update(self.playfield, visited, connected_bushes)
-
+                subtree.update(visited, connected_bushes)
 
 def main():
     root = tk.Tk()
