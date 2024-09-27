@@ -6,7 +6,7 @@ import tkinter as tk
 
 def load_images():
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    image_dir = os.path.join(script_dir, 'images')
+    image_dir = os.path.join(script_dir, 'images/100x100')
 
     images = {
         "pipe00": Image.open(os.path.join(image_dir, 'pipe00.png')),
@@ -58,9 +58,9 @@ def get_tile_symbol(title):
 # Playfield hehe
 class Playfield:
     def __init__(self, rows, cols):
-        self.playfield = [[(0, 1, 0, 0, 2), (0, 0, 0, 1, 1), ( 0, 1, 1, 0, 0)],
-                          [(1, 0, 0, 0, 1), (0, 1, 1, 0, 1), ( 0, 0, 1, 1, 0)],
-                          [(1, 0, 1, 0, 0), (0, 1, 1, 0, 0), ( 1, 0, 0, 0, 2)]]
+        self.playfield = [[(0, 1, 0, 0, 2), (0, 0, 1, 1, 0), (0, 1, 1, 0, 0)],
+                          [(1, 0, 0, 0, 1), (0, 1, 1, 0, 0), (0, 0, 1, 1, 0)],
+                          [(1, 0, 1, 0, 0), (0, 1, 1, 0, 0), (1, 0, 0, 0, 2)]]
 
         self.rows = rows
         self.cols = cols
@@ -70,25 +70,25 @@ class Playfield:
         self.tree = Tree(self, self.well)
 
     def __getitem__(self, index):
-        r,c,e = index
+        r, c, e = index
         return self.playfield[r][c][e]
 
     def _find_bush_positions(self):
         bush_positions = set()
         for r in range(self.rows):
             for c in range(self.cols):
-                if self.playfield[r][c][0] == 2:  #'2' indicates a bush
+                if self.playfield[r][c][0] == 2:  # '2' indicates a bush
                     bush_positions.add((r, c))
         return bush_positions
 
     # rotating one tile
     def rotateTile(self, row, col):
-        types, north, east, south, west = self.playfield[row][col]
+        north, east, south, west, types = self.playfield[row][col]
         new_north = west
         new_east = north
         new_south = east
         new_west = south
-        self.playfield[row][col] = types, new_north, new_east, new_south, new_west
+        self.playfield[row][col] = new_north, new_east, new_south, new_west, types
         # Calling checkIfConnected to look for adjacent tiles
         self.tree.update()
 
@@ -148,14 +148,13 @@ class Playfield:
     # Displaying playfield on screen
     def displayPlayfield(self, images, canvas, image_refs):
         canvas.delete("all")  # Clear existing images
-        tile_size = 200
 
         for row_idx, row in enumerate(self.playfield):
             for col_idx, tile in enumerate(row):
                 symbol = get_tile_symbol(tile)
                 if symbol in images:
                     img = ImageTk.PhotoImage(images[symbol])
-                    canvas.create_image(col_idx * tile_size, row_idx * tile_size, anchor=tk.NW, image=img)
+                    canvas.create_image(col_idx * PHOTO_SIZE, row_idx * PHOTO_SIZE, anchor=tk.NW, image=img)
                     image_refs.append(img)  # Keep a reference to avoid garbage collection
 
 
@@ -170,17 +169,16 @@ class Tree:
 
         self.playfield = playfield
 
-
     def update(self, visited=None, connected_bushes=None):
 
-        #if set's don't exist --> create them
+        # if set's don't exist --> create them
         if visited is None:
             visited = set()
 
         if connected_bushes is None:
             connected_bushes = set()
 
-        #adding to set to maintain recursion end
+        # adding to set to maintain recursion end
         visited.add(self.position)
 
         if self.playfield[self.position[0], self.position[1], 4] == 2:
@@ -189,35 +187,35 @@ class Tree:
         if connected_bushes == self.playfield.bushes:
             print("Congrats, you have won the game :)")
 
-        for direction, (dr,dc), attr in zip(
+        for direction, (dr, dc), attr in zip(
                 range(4),
                 [(-1, 0), (0, 1), (1, 0), (0, -1)],
                 ["north", "east", "south", "west"]):
 
-            #setting new position
+            # setting new position
             newPosition = (self.position[0] + dr, self.position[1] + dc)
 
-            #check for each direction
+            # check for each direction
             if (0 <= newPosition[0] < self.playfield.rows and
-                0 <= newPosition[1] < self.playfield.cols and
-                newPosition not in visited and
-                self.playfield.checkIfConnected(self.position[0], self.position[1], direction)):
-
-                #create subtree
+                    0 <= newPosition[1] < self.playfield.cols and
+                    newPosition not in visited and
+                    self.playfield.checkIfConnected(self.position[0], self.position[1], direction)):
+                # create subtree
                 subtree = Tree(self.playfield, newPosition)
                 setattr(self, attr, subtree)
                 subtree.update(visited, connected_bushes)
 
+
+
 def main():
     root = tk.Tk()
 
-    pf = Playfield(3, 3)
+    pf = Playfield(PLAYFIELD_SIZE, PLAYFIELD_SIZE)
     images = load_images()
 
-    tile_size = 200
 
-    canvas_width = len(pf.playfield[0]) * tile_size
-    canvas_height = len(pf.playfield) * tile_size
+    canvas_width = len(pf.playfield[0]) * PHOTO_SIZE
+    canvas_height = len(pf.playfield) * PHOTO_SIZE
 
     canvas = tk.Canvas(root, width=canvas_width, height=canvas_height)
     canvas.pack()
@@ -226,8 +224,8 @@ def main():
 
     def on_click(event):
         print("#####################")
-        col = event.x // tile_size
-        row = event.y // tile_size
+        col = event.x // PHOTO_SIZE
+        row = event.y // PHOTO_SIZE
 
         pf.rotateTile(row, col)
         pf.displayPlayfield(images, canvas, image_refs)
@@ -237,6 +235,9 @@ def main():
 
     root.mainloop()
 
+PHOTO_SIZE = 100
+PLAYFIELD_SIZE = 3
 
 if __name__ == "__main__":
     main()
+
