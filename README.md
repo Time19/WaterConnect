@@ -36,6 +36,9 @@ You can click on a tile to rotate it by 90 degrees.
 
 
 As my experience with python is relatively low, I used chatgpt to help me with the canvas and loading the selfmade images in the right order, depending on the matrix.
+<br>
+</br>
+
 
 <h2>How the game looks</h2>
 
